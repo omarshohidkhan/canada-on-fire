@@ -79,12 +79,30 @@ All three map layers use **EPSG:3347** (StatCan Lambert), so they line up with n
 4. **Removed during cleaning:** duplicates, unknown years, prescribed burns, re-burns, and AB/SK mutual-aid responses
    (see `cleaning_log.csv`). Mention this in the report's data section.
 
+## Notebooks (run in order)
+
+| Notebook | What it does |
+|---|---|
+| `01_clean.ipynb` | Raw downloads → `data/clean/` (only needed if you change the cleaning) |
+| `02_explore.ipynb` | Tests each proposal claim; the first cell summarises what holds up |
+| `03_figures.ipynb` | Builds all 8 report figures into `figures/` (PDF for LaTeX, PNG previews) |
+
+## Figure style
+
+Every figure uses `notebooks/style.py` (`import style; style.apply()`). Use its constants rather than picking colours:
+
+- `style.CAUSE_COLORS` – Lightning orange, Human blue, Unknown grey, the same in every figure
+- `style.HEAT` – sequential ramp for amounts (heat map, maps)
+- `style.ACCENT` / `style.NEUTRAL` – highlight vs context in single-series charts
+- `style.FULL_WIDTH` (6.5 in) / `style.HALF_WIDTH` – figure widths that fit the 12pt LaTeX page
+- `style.save(fig, "name")` – writes `figures/name.pdf` and `.png`
+
 ## Layout
 
 ```
 data/raw/        downloads (not shared)
 data/clean/      outputs of 01_clean.ipynb
-notebooks/       01_clean.ipynb, then figure notebooks
+notebooks/       01_clean, 02_explore, 03_figures, style.py
 figures/         exported figures for the report
 report/          LaTeX source
 ```
