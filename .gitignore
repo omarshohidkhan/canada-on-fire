@@ -1,0 +1,20 @@
+# Raw downloads (2.3 GB, see README for links)
+data/raw/
+
+# Python
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# LaTeX build files
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.fdb_latexmk
+*.fls
