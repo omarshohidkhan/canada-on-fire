@@ -1,0 +1,31 @@
+{
+ "n_fires": 448447,
+ "years": [
+  1950,
+  2025
+ ],
+ "record_mha": 17.6,
+ "ratio": 2.0,
+ "waffle_fires": {
+  "Lightning": 44,
+  "Human": 54,
+  "Unknown": 2
+ },
+ "waffle_area": {
+  "Lightning": 84,
+  "Human": 12,
+  "Unknown": 4
+ },
+ "fires_raw": {
+  "Lightning": 195246,
+  "Human": 242032,
+  "Unknown": 11169
+ },
+ "area_mha_raw": {
+  "Lightning": 140.6,
+  "Human": 19.1,
+  "Unknown": 6.8
+ },
+ "share_fires_ge200": 4.8,
+ "share_area_ge200": 98.9
+}
