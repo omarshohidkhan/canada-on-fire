@@ -1,0 +1,668 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Canada on Fire</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Seven decades of Canadian wildfire patterns, causes and extremes: COMP 6934 Group 15 project.">
+<script>try { const s = localStorage.getItem("cof-theme"); if (s === "light" || s === "dark") document.documentElement.setAttribute("data-theme", s); } catch (e) {}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a field report read along one burn line. Narrow text column (~66ch),
+   chart "plates" break out wider; sections follow the report's numbered questions. */
+:root {
+  --bg: #F5F4F1;        /* ash paper */
+  --surface: #FFFFFF;
+  --ink: #1F1B17;
+  --muted: #675F57;
+  --line: #DED8D0;
+  --ember: #B3261E;     /* record / focus accent */
+  --ember-fill: #B3261E; /* large focus areas */
+  --lightning: #C77700;
+  --human: #1F5A99;
+  --unknown: #2E9E6E;   /* third categorical slot, validated all-pairs */
+  --context: #C9C3BB;   /* de-emphasised marks */
+  --neutral: #5E5852;
+  --muted-fill: #D7D0C6;
+  --heat-0: #FFF3E0; --heat-1: #F9B26B; --heat-2: #E4522E; --heat-3: #A3123A; --heat-4: #3A0A2A;
+  --shade: rgba(120, 108, 96, 0.10);
+  --f-display: "Big Shoulders Display", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --f-data: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --col: 41rem;
+  --wide: 70rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #13110F; --surface: #1C1916; --ink: #EEE8E1; --muted: #A69D93; --line: #2F2A25;
+    --ember: #FF6A3D; --ember-fill: #A8321F; --lightning: #C98226; --human: #4F8FD4; --unknown: #26A878;
+    --context: #4A443E; --neutral: #9A928A; --muted-fill: #3A342E;
+    --heat-0: #1F1A17; --heat-1: #5C1F4A; --heat-2: #B5363E; --heat-3: #F08A24; --heat-4: #FBEA8A;
+    --shade: rgba(255, 240, 220, 0.05);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #13110F; --surface: #1C1916; --ink: #EEE8E1; --muted: #A69D93; --line: #2F2A25;
+  --ember: #FF6A3D; --ember-fill: #A8321F; --lightning: #C98226; --human: #4F8FD4; --unknown: #26A878;
+  --context: #4A443E; --neutral: #9A928A; --muted-fill: #3A342E;
+  --heat-0: #1F1A17; --heat-1: #5C1F4A; --heat-2: #B5363E; --heat-3: #F08A24; --heat-4: #FBEA8A;
+  --shade: rgba(255, 240, 220, 0.05);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--bg); color: var(--ink);
+  font: 400 1.0625rem/1.65 var(--f-body);
+  -webkit-font-smoothing: antialiased;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+a { color: inherit; text-decoration-color: var(--ember); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--ember); outline-offset: 3px; border-radius: 3px; }
+.gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.col { max-width: var(--col); margin-inline: auto; }
+.wide { max-width: var(--wide); margin-inline: auto; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 800; line-height: 0.98; letter-spacing: 0.005em; text-wrap: balance; margin: 0; }
+p { margin: 0; }
+.num { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+.eyebrow { font: 600 0.72rem/1.2 var(--f-data); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+
+/* ---- top bar ---- */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.bar-in { display: flex; align-items: center; gap: 1.25rem; padding-block: 0.6rem; }
+.mark { font: 800 1.15rem/1 var(--f-display); letter-spacing: 0.04em; text-transform: uppercase; text-decoration: none; display: flex; gap: 0.45rem; align-items: center; }
+.mark i { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--ember); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ember) 25%, transparent); }
+.bar nav { display: flex; gap: 0.25rem; margin-left: auto; flex-wrap: wrap; }
+.bar nav a { font: 600 0.75rem/1 var(--f-data); letter-spacing: 0.08em; text-decoration: none; padding: 0.45rem 0.6rem; border-radius: 999px; color: var(--muted); }
+.bar nav a:hover { color: var(--ink); background: var(--shade); }
+.theme { flex: none; width: 2.2rem; height: 2.2rem; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.theme:hover { background: var(--shade); }
+.theme svg { width: 1.05rem; height: 1.05rem; }
+.theme svg.t-dark { display: none; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .theme svg.t-light { display: none; } :root:not([data-theme="light"]) .theme svg.t-dark { display: block; } }
+:root[data-theme="dark"] .theme svg.t-light { display: none; }
+:root[data-theme="dark"] .theme svg.t-dark { display: block; }
+.overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.overlay text { font: 700 1.9px var(--f-body); paint-order: stroke; stroke: var(--surface); stroke-width: 0.5px; fill: var(--ink); }
+table.data { border-collapse: collapse; font-size: 0.85rem; min-width: 22rem; }
+table.data th, table.data td { padding: 0.3rem 0.8rem 0.3rem 0; text-align: right; border-bottom: 1px solid var(--line); }
+table.data th:first-child, table.data td:first-child { text-align: left; }
+table.data th { font: 600 0.72rem/1.2 var(--f-data); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.tablewrap { overflow-x: auto; }
+@media (prefers-reduced-motion: reduce) { .stack img { transition: none; } }
+
+/* ---- hero ---- */
+.hero { padding-block: clamp(2.5rem, 6vw, 4.5rem) 2rem; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; }
+.hero h1 { font-size: clamp(3.6rem, 10vw, 7.6rem); text-transform: uppercase; letter-spacing: 0.01em; }
+.hero h1 span { color: var(--ember); }
+.dek { margin-top: 1.1rem; font-size: 1.2rem; line-height: 1.5; color: var(--muted); max-width: 30rem; }
+.hero .eyebrow { margin-bottom: 1rem; }
+.hero-map { position: relative; }
+.stack { position: relative; width: 100%; aspect-ratio: 1 / 0.68; max-width: 100%; }
+.stack img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transition: opacity 0.45s ease; }
+.t-dark { display: none; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .t-light { display: none; } :root:not([data-theme="light"]) .t-dark { display: block; } }
+:root[data-theme="dark"] .t-light { display: none; }
+:root[data-theme="dark"] .t-dark { display: block; }
+.hero-map figcaption { font-size: 0.78rem; color: var(--muted); margin-top: 0.4rem; }
+
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); margin-block: 1rem 0; }
+.stat { padding: 1.1rem 1rem 1.2rem 0; display: grid; gap: 0.35rem; align-content: start; }
+.stat + .stat { padding-left: 1rem; border-left: 1px solid var(--line); }
+.stat b { font: 650 clamp(2rem, 4vw, 2.8rem)/1 var(--f-body); letter-spacing: -0.02em; font-variant-numeric: proportional-nums; }
+.stat b small { font-size: 0.5em; font-weight: 600; margin-left: 0.15em; color: var(--muted); }
+.stat span { font-size: 0.88rem; line-height: 1.4; color: var(--muted); }
+.stat.hot b { color: var(--ink); }
+.stat.hot { box-shadow: inset 0 3px 0 var(--ember); }
+
+/* ---- narrative ---- */
+main section { padding-block: clamp(3rem, 7vw, 5rem) 0; }
+.qhead { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.4rem 1.1rem; align-items: baseline; margin-bottom: 1.5rem; }
+.qhead .qn { font: 800 clamp(3rem, 7vw, 4.6rem)/0.8 var(--f-display); color: var(--ember); grid-row: span 2; }
+.qhead h2 { font-size: clamp(2rem, 4.6vw, 3rem); }
+.prose { display: grid; gap: 1.05rem; }
+.prose p { max-width: 66ch; }
+.prose strong { font-weight: 600; }
+.qs { list-style: none; padding: 0; margin: 0.5rem 0 0; display: grid; gap: 0.6rem; counter-reset: q; }
+.qs li { counter-increment: q; display: grid; grid-template-columns: 2.3rem minmax(0, 1fr); gap: 0.5rem; padding-top: 0.6rem; border-top: 1px solid var(--line); }
+.qs li::before { content: "Q" counter(q); font: 600 0.8rem/1.9 var(--f-data); color: var(--ember); }
+
+/* ---- figure plates ---- */
+.plate { margin-block: 2.2rem 0; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: clamp(1rem, 2.5vw, 1.6rem); display: grid; gap: 0.9rem; min-width: 0; }
+.plate header { display: grid; gap: 0.3rem; }
+.plate h3 { font-size: clamp(1.45rem, 3vw, 1.9rem); }
+.plate .sub { font-size: 0.92rem; color: var(--muted); }
+.chart { width: 100%; min-height: 300px; min-width: 0; }
+.plate footer { display: grid; gap: 0.6rem; font-size: 0.92rem; }
+.plate footer p { max-width: 75ch; }
+.plate .src { font-size: 0.75rem; color: var(--muted); }
+details.why { border-top: 1px dashed var(--line); padding-top: 0.6rem; }
+details.why summary { cursor: pointer; font: 600 0.78rem/1.6 var(--f-data); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); list-style: none; }
+details.why summary::-webkit-details-marker { display: none; }
+details.why summary::before { content: "+ "; color: var(--ember); }
+details.why[open] summary::before { content: "– "; }
+details.why div { margin-top: 0.5rem; display: grid; gap: 0.5rem; color: var(--muted); max-width: 75ch; }
+.key { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; font-size: 0.85rem; }
+.key span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.key i { width: 0.75rem; height: 0.75rem; border-radius: 2px; display: inline-block; }
+
+/* waffle */
+.waffles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1rem, 4vw, 3rem); }
+.waffle { display: grid; grid-template-columns: minmax(0, 15rem) auto; gap: 1rem; align-items: start; }
+.waffle h4 { grid-column: 1 / -1; margin: 0; font: 600 0.95rem/1.3 var(--f-body); }
+.cells { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; }
+.cells i { aspect-ratio: 1; border-radius: 2px; display: block; }
+.wlab { display: grid; gap: 0.55rem; }
+.wlab div { display: grid; line-height: 1.1; }
+.wlab b { font: 650 1.7rem/1 var(--f-body); letter-spacing: -0.02em; color: var(--ink); }
+.wlab span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.wlab span i { width: 0.7rem; height: 0.7rem; border-radius: 2px; display: inline-block; }
+.wlab span { font-size: 0.8rem; color: var(--muted); }
+
+/* map controls */
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; }
+.controls label { font: 600 0.78rem/1 var(--f-data); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.controls input[type="range"] { flex: 1 1 14rem; accent-color: var(--ember); min-width: 0; }
+.btn { font: 600 0.8rem/1 var(--f-data); letter-spacing: 0.05em; padding: 0.55rem 0.9rem; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.readout { font: 600 0.9rem/1.3 var(--f-data); }
+.ramp { display: flex; gap: 2px; align-items: stretch; }
+.ramp span { flex: 1; font: 500 0.68rem/1 var(--f-data); text-align: center; color: var(--muted); display: grid; gap: 4px; }
+.ramp span i { height: 0.5rem; border-radius: 1px; display: block; }
+
+/* conclusions */
+.answers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; margin-top: 1.5rem; }
+.answers article { background: var(--surface); padding: 1.3rem; display: grid; gap: 0.5rem; align-content: start; }
+.answers .qn { font: 600 0.78rem/1 var(--f-data); color: var(--ember); letter-spacing: 0.1em; }
+.answers h3 { font-size: 1.5rem; }
+.answers p { font-size: 0.95rem; color: var(--muted); }
+
+.notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; margin-top: 1.5rem; font-size: 0.92rem; }
+.notes h4 { margin: 0 0 0.4rem; font: 600 0.78rem/1.3 var(--f-data); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.notes ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.35rem; }
+footer.site { margin-top: 4rem; border-top: 1px solid var(--line); padding-block: 2rem 3rem; font-size: 0.85rem; color: var(--muted); }
+footer.site .in { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; justify-content: space-between; }
+
+@media (max-width: 860px) {
+  .hero { grid-template-columns: minmax(0, 1fr); }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat:nth-child(3) { padding-left: 0; border-left: 0; }
+  .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
+  .waffles, .answers, .notes { grid-template-columns: minmax(0, 1fr); }
+  .bar nav a.opt { display: none; }
+}
+@media (max-width: 480px) {
+  .waffle { grid-template-columns: minmax(0, 1fr) auto; }
+  .chart { min-height: 260px; }
+}
+</style>
+
+<header class="bar gutter">
+  <div class="bar-in wide">
+    <a class="mark" href="#top"><i aria-hidden="true"></i>Canada on Fire</a>
+    <nav aria-label="Sections">
+      <a href="#q1">Q1</a><a href="#q2">Q2</a><a href="#q3">Q3</a><a href="#q4">Q4</a>
+      <a class="opt" href="#findings">Findings</a><a class="opt" href="#method">Method</a>
+    </nav>
+    <button class="theme" id="themeBtn" type="button" aria-label="Switch colour theme" title="Switch light / dark theme">
+      <svg class="t-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="t-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.2M12 19.8V22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M2 12h2.2M19.8 12H22M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+  <div class="gutter">
+    <div class="hero wide">
+      <div>
+        <p class="eyebrow">COMP 6934 · Group 15 · Fall 2026</p>
+        <h1>Canada <span>on</span> Fire</h1>
+        <p class="dek">Seven decades of wildfire patterns, causes and extremes, read from <span class="num">448,447</span> fire records in the Canadian National Fire Database.</p>
+      </div>
+      <figure class="hero-map" style="margin:0">
+        <div class="stack" id="heroStack" role="img" aria-label="Map of every mapped burn scar in Canada, 1972 to 2024: a continuous boreal belt from Yukon to Quebec"></div>
+        <figcaption>Every mapped burn scar, 1972–2024. Darker (light theme) or brighter (dark theme) means more recent.</figcaption>
+      </figure>
+    </div>
+    <div class="stats wide" role="list">
+      <div class="stat hot" role="listitem"><b>17.6<small>Mha</small></b><span>burned in 2023, about twice the next-worst year</span></div>
+      <div class="stat" role="listitem"><b>84<small>%</small></b><span>of the area burned came from lightning fires</span></div>
+      <div class="stat" role="listitem"><b>5.3<small>%</small></b><span>of fires reached 200 ha, and they burned 98.9% of the area</span></div>
+      <div class="stat" role="listitem"><b>8.7<small>Mha</small></b><span>burned in 2025, the second-largest year on record</span></div>
+    </div>
+  </div>
+
+  <section class="gutter" id="intro">
+    <div class="col prose">
+      <p class="eyebrow">Why this data</p>
+      <p>Wildfire is now Canada's most visible environmental problem, and 2023 was the largest season on record. The headlines rarely show the longer pattern. We used the <strong>Canadian National Fire Database (CNFDB)</strong>, maintained by the Canadian Forest Service, Natural Resources Canada: every reported fire since 1950 with its location, date, final size and cause, plus mapped burn perimeters from 1972 to 2024.</p>
+      <p>Each chart below makes one point and answers one of four questions:</p>
+      <ol class="qs">
+        <li>Is the area burned each year increasing, and how unusual was 2023?</li>
+        <li>How do lightning- and human-caused fires differ in when, where and how big they burn?</li>
+        <li>Do a few very large fires account for most of the area, and has the typical fire grown?</li>
+        <li>Where are Canada's wildfire hotspots, and have they shifted?</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ===================== Q1 ===================== -->
+  <section class="gutter" id="q1">
+    <div class="col">
+      <div class="qhead"><span class="qn">Q1</span><p class="eyebrow">Trend and the 2023 season</p><h2>Fewer fires, extreme seasons</h2></div>
+      <div class="prose"><p>The number of fires reported each year peaked in the early 1990s and has fallen since, a clear decline. Area burned does not follow a straight line: it has no statistically significant trend since 1980, but it swings hard, and the two largest years on record are recent. 2023 burned <strong>17.6 million hectares</strong>, twice any other year, and 2025 burned <strong>8.7 million</strong>.</p></div>
+    </div>
+    <div class="wide">
+      <figure class="plate" style="margin-inline:0">
+        <header><p class="eyebrow">Figure 1 · Line chart</p><h3>Fire counts fall; area burned swings, with 2023 and 2025 on top</h3><p class="sub">Canada, 1950–2025. Grey: yearly totals. Colour: trailing 10-year average. Shaded: incomplete reporting before 1980.</p></header>
+        <div class="chart" id="c1_trend" role="img" aria-label="Line charts, 1950 to 2025: the number of fires peaks around 1990 and falls; area burned is volatile, with 2023 at 17.6 million hectares and 2025 at 8.7 million the two largest years"></div>
+        <footer>
+          <p>Trend tests over 1980–2025, when reporting is complete: fires fell by 77 a year (95% CI 45 to 116 fewer, Kendall p &lt; 0.001); area burned has no significant trend (Kendall τ = 0.17, p = 0.10). The rise in the 10-year average comes from a few extreme recent years, not a steady climb.</p>
+          <details class="why"><summary>Data table: ten largest years</summary><div class="tablewrap" id="topYears"></div></details>
+          <details class="why"><summary>Why this chart</summary><div><p>Time has a meaningful order, so a line shows the trend (Lecture 3). Two aligned panels, each with a zero baseline, replace a dual-axis chart, which would let either line be slid up or down to fake a crossing.</p><p>Grey context and a coloured average apply the course's angle, frame and focus. The shading stops the early rise in counts, an artefact of reporting, from reading as a real trend. A trend test backs each claim, so the title says only what the data supports.</p></div></details>
+        </footer>
+      </figure>
+      <figure class="plate" style="margin-inline:0">
+        <header><p class="eyebrow">Figure 2 · Heatmap</p><h3>A narrow early-summer window, and 2023 lit it early</h3><p class="sub">Hectares burned per month, 1950–2025, on a square-root colour scale. Hover any cell for its value.</p></header>
+        <div class="chart" id="c2_heatmap" role="img" aria-label="Heatmap of area burned by month and year: burning is concentrated in May to August, and May 2023 is the largest May on record"></div>
+        <footer>
+          <p>May to August holds 97% of the dated area burned. In May 2023 alone, 6.5 million hectares burned, the largest May in 76 years.</p>
+          <details class="why"><summary>Why this chart</summary><div><p>Two ordered dimensions (76 years × 8 months) of one magnitude fit a heatmap best. A square-root scale keeps zero at zero, so the record months stand out. A log scale made every summer cell nearly black.</p></div></details>
+        </footer>
+      </figure>
+      <figure class="plate" style="margin-inline:0">
+        <header><p class="eyebrow">Figure 3 · Treemap</p><h3>2023 burned in five provinces and territories at once</h3><p class="sub">Area burned in 2023 by the province or territory where each fire burned. Tile area is proportional to hectares. Red: over 1.5 million ha.</p></header>
+        <div class="chart" id="c3_treemap" role="img" aria-label="Treemap of area burned in 2023: Quebec 4.3, Northwest Territories 4.3, Alberta 3.2, BC 2.9 and Saskatchewan 1.8 million hectares"></div>
+        <footer>
+          <p>Quebec and the Northwest Territories, 4.3 million hectares each, made up half of 2023. Alberta, British Columbia and Saskatchewan added 1.8–3.2 million each; the five together hold 93% of the year.</p>
+          <details class="why"><summary>Why this chart</summary><div><p>This is a part-to-whole question with 13 parts. A treemap handles many parts better than a pie or sunburst (Lecture 8). Colour marks only the five tiles over 1.5 million hectares and does not repeat the size. Fires are placed by where they burned, so Parks Canada fires count in their province.</p></div></details>
+        </footer>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ===================== Q2 ===================== -->
+  <section class="gutter" id="q2">
+    <div class="col">
+      <div class="qhead"><span class="qn">Q2</span><p class="eyebrow">Lightning vs people</p><h2>Two causes, two different problems</h2></div>
+      <div class="prose"><p>People start most fires, but they start them where they can be reached and put out. Lightning starts fewer fires, in remote forest in midsummer, and those are the fires that grow.</p></div>
+    </div>
+    <div class="wide">
+      <figure class="plate" style="margin-inline:0">
+        <header><p class="eyebrow">Figure 4 · Waffle charts</p><h3>People start most fires; lightning burns most of the land</h3><p class="sub">Each square is 1% of all fires (left) or of all hectares burned (right), 1950–2025.</p></header>
+        <div class="waffles" id="waffles"></div>
+        <footer>
+          <details class="why"><summary>Why this chart</summary><div><p>The story is two part-to-whole splits side by side. Waffles make percentages countable and always total 100 (Lecture 8). Squares are rounded with the largest-remainder method so each grid holds exactly 100.</p></div></details>
+        </footer>
+      </figure>
+      <figure class="plate" style="margin-inline:0">
+        <header><p class="eyebrow">Figure 5 · Radar chart</p><h3>People burn in spring, lightning in summer</h3><p class="sub">Share of each cause's fires by month of discovery, so the shapes compare timing rather than volume.</p></header>
+        <div class="chart" id="c5_radar" role="img" aria-label="Radar chart of the monthly share of fires: human fires peak in May, lightning fires peak in July"></div>
+        <footer>
+          <p>42% of human-caused fires start in spring (March–May); 90% of lightning fires start in summer (June–August).</p>
+          <details class="why"><summary>Why this chart</summary><div><p>Months are cyclic, and a closed radar line keeps December next to January (Lecture 11). A rose (polar bar) chart was rejected because its area grows with the square of the value and exaggerates the peaks; for the same reason the shapes here are lines without a fill.</p></div></details>
+        </footer>
+      </figure>
+      <figure class="plate" style="margin-inline:0">
+        <header><p class="eyebrow">Figure 6 · Ranked stacked bars</p><h3>Lightning burns most of the land in every major fire region</h3><p class="sub">Total area burned 1950–2025 by the province or territory where the fire burned, and by cause. Ranked, zero baseline.</p></header>
+        <div class="chart" id="c6_bars" role="img" aria-label="Stacked bars of total area burned by province and cause: the Northwest Territories lead with 38 million hectares, 96 percent from lightning"></div>
+        <footer>
+          <p>The Northwest Territories burned 38 million hectares, 96% of it from lightning, and in every region with over 10 million hectares burned, lightning caused 74–96% of the area. Nova Scotia, New Brunswick and PEI together burned under 0.2 million (their records start in 1960, 1980 and 2018).</p>
+          <details class="why"><summary>Why this chart</summary><div><p>Comparing magnitudes across 13 categories is a bar chart's job. Bars are ranked rather than alphabetical and start at zero (Lecture 3). A map of the same totals would let large territories dominate by size alone.</p></div></details>
+        </footer>
+      </figure>
+      <figure class="plate" style="margin-inline:0">
+        <header><p class="eyebrow">Figure 7 · Dot maps</p><h3>Lightning strikes the remote north; people start fires where they live</h3><p class="sub">Every fire start, 1950–2025. One dot per fire. The blank southern Prairies are farmland outside agency fire reporting, not fire-free land.</p></header>
+        <div class="controls" role="group" aria-label="Choose cause">
+          <button class="btn" type="button" data-cause="lightning" aria-pressed="true">Lightning · <span class="num">195,246</span></button>
+          <button class="btn" type="button" data-cause="human" aria-pressed="false">Human · <span class="num">242,032</span></button>
+        </div>
+        <div class="stack" id="dotStack" role="img" aria-label="Dot maps of fire starts: lightning starts spread across the remote boreal interior; human starts follow roads, rivers and the populated south"></div>
+        <footer>
+          <p>Lightning starts spread across the boreal interior. Human starts trace highways, rivers, rail lines and the populated south.</p>
+          <details class="why"><summary>Why this chart</summary><div><p>A geographic scatter with tiny, translucent dots lets density draw the pattern (Lectures 3 and 12, overplotting). Showing one cause at a time on an identical extent works as small multiples. One map with two colours would mix and overplot.</p></div></details>
+        </footer>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ===================== Q3 ===================== -->
+  <section class="gutter" id="q3">
+    <div class="col">
+      <div class="qhead"><span class="qn">Q3</span><p class="eyebrow">Extremes</p><h2>A few huge fires do almost all the burning</h2></div>
+      <div class="prose"><p>Most fires stay small: 69% of fires with a recorded size are under one hectare. The area burned comes from the rare fires that escape, and since 1980 the escaped lightning fires have been getting larger.</p></div>
+    </div>
+    <div class="wide">
+      <figure class="plate" style="margin-inline:0">
+        <header><p class="eyebrow">Figure 8 · Mirrored histogram</p><h3>5.3% of fires, 98.9% of the area</h3><p class="sub">408,419 fires with a recorded size, log scale: share of fires (top) and share of area burned (bottom) in each size band. Red: 200 ha and larger.</p></header>
+        <div class="chart" id="c7_hist" role="img" aria-label="Mirrored histogram of fire sizes: most fires are under 1 hectare, but fires of 200 hectares or more hold 98.9 percent of the area"></div>
+        <footer>
+          <p>The largest 1% of fires burned 83% of the area. The spike near 0.1 ha is a recording habit: small fires are often logged at that size. A further 40,028 fires recorded as 0 ha are left out of this chart.</p>
+          <details class="why"><summary>Why this chart</summary><div><p>A histogram shows the shape of a distribution (Lecture 7), and fire size spans eight orders of magnitude, so the axis is logarithmic. Both panels are percentages, so mirroring them is not a dual axis. Bins are aligned so that 200 ha, the CNFDB large-fire threshold, is an edge.</p></div></details>
+        </footer>
+      </figure>
+      <figure class="plate" style="margin-inline:0">
+        <header><p class="eyebrow">Figure 9 · Line chart of yearly medians</p><h3>Since 1980 the typical escaped lightning fire has grown; human fires have not</h3><p class="sub">Median size of fires that grew past 1 ha, each year 1980–2025. Log scale.</p></header>
+        <div class="chart" id="c8_medians" role="img" aria-label="Yearly median size of escaped fires, 1980 to 2025: lightning medians rise from under 10 hectares to about 50; human medians stay near 3 to 4 hectares"></div>
+        <footer>
+          <p>Rank correlation with year (Spearman): lightning ρ = 0.68 (p &lt; 0.001; 0.66 with 2023 removed), human ρ = 0.28 (p = 0.06, not significant). Larger recorded fires may partly reflect policy, since remote fires are often left to burn, and better satellite mapping.</p>
+          <details class="why"><summary>Why this chart</summary><div><p>The printed report shows the full distribution in each decade as a boxen plot (Lecture 12), which keeps the heavy tail visible. Here we plot the yearly medians that the trend test uses, so the picture and the statistic come from the same numbers. Starting in 1980 avoids the incomplete early reporting; the 2020s are a partial decade.</p></div></details>
+        </footer>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ===================== Q4 ===================== -->
+  <section class="gutter" id="q4">
+    <div class="col">
+      <div class="qhead"><span class="qn">Q4</span><p class="eyebrow">Geography</p><h2>A stable belt that burns harder, and further west</h2></div>
+      <div class="prose"><p>Fifty years of burn scars trace one belt of boreal forest from Yukon to Quebec. Its latitude has not changed: the area-weighted centre of burning stayed between 57.7 and 59.7°N in every decade. What changed is how much burns, and where along the belt. Mapped burning per year doubled in the 2020s, and the centre moved about 370 km west. Scrub through the decades to watch the scars accumulate and the centre move.</p></div>
+    </div>
+    <div class="wide">
+      <figure class="plate" style="margin-inline:0">
+        <header><p class="eyebrow">Figure 10 · Map of burn perimeters</p><h3>Half a century of burn scars, and the moving centre of burning</h3><p class="sub">Mapped perimeters of 15,578 fires, 1972–2024, coloured by decade. Dots: area-weighted centre of burning in each decade. Lambert conformal conic projection.</p></header>
+        <div class="controls">
+          <button class="btn" id="play" type="button" aria-pressed="false">Play</button>
+          <label for="decade">Up to</label>
+          <input id="decade" type="range" min="0" max="5" step="1" value="5" aria-describedby="readout">
+          <span class="readout num" id="readout"></span>
+        </div>
+        <div class="stack" id="scarStack" role="img" aria-label="Map of burn scars by decade with the centre of burning for each decade; the centre moves west from Manitoba toward Saskatchewan and Alberta"></div>
+        <div class="ramp" id="ramp" aria-hidden="true"></div>
+        <footer>
+          <p class="src">Source: CNFDB burned-area polygons, NRCan. Provinces: Natural Earth. Perimeters simplified to 1 km for display. The 1970s polygons are the least complete, and the 2020s hold five seasons.</p>
+          <details class="why"><summary>Why this chart</summary><div><p>Q4 is about place, and only a projected map shows where the belt lies. It extends the course's scatter of locations to real perimeters. Colour is a single sequential ramp by decade (light theme: pale to dark; dark theme: dark to glowing), with the newest decade drawn on top. Because newer scars cover older ones, the "has it shifted?" answer is measured, not eyeballed: each dot is the decade's area-weighted centre, and the readout gives area burned per year so decades of different length compare fairly.</p></div></details>
+        </footer>
+      </figure>
+      <figure class="plate" style="margin-inline:0">
+        <header><p class="eyebrow">Figure 11 · Choropleth</p><h3>Scaled by land area, Saskatchewan burns hardest</h3><p class="sub">Average hectares burned per 1,000 km² of land per year, 1980–2025, by where the fires burned.</p></header>
+        <div class="stack" id="rateStack" role="img" aria-label="Choropleth of hectares burned per 1,000 square kilometres per year: Saskatchewan 935, Manitoba 604, Alberta 554, Northwest Territories 531, Yukon 367, BC 288, Quebec 249, Ontario 191"></div>
+        <div class="ramp" id="rateRamp" aria-hidden="true"></div>
+        <footer>
+          <p>Saskatchewan (935), Manitoba (604) and Alberta (554) burn the most per unit of land. The Northwest Territories, first in total area, is fourth (531). Land area includes tundra and farmland with little to burn, which pulls down Nunavut and the southern Prairies.</p>
+          <details class="why"><summary>Why this chart</summary><div><p>Totals (Figure 6) favour the largest territories. A choropleth must show a rate, not a count, or big regions look important just for being big, so area burned is divided by land area and years. Five binned classes on one sequential ramp, with every value printed on the map, so no reader has to match shades to a legend.</p></div></details>
+        </footer>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ===================== Findings ===================== -->
+  <section class="gutter" id="findings">
+    <div class="col"><div class="qhead"><span class="qn">→</span><p class="eyebrow">Conclusions</p><h2>What the data says</h2></div></div>
+    <div class="wide answers">
+      <article><span class="qn">Q1</span><h3>Fewer fires, extreme seasons</h3><p>Fire counts have fallen since 1980 (p &lt; 0.001). Area burned has no significant linear trend, but the two largest years on record are recent: 2023 (17.6 Mha, with a record May, burning in five jurisdictions at once) and 2025 (8.7 Mha). 2023 was not an isolated spike. Evidence: Figures 1–3.</p></article>
+      <article><span class="qn">Q2</span><h3>Different causes, different fires</h3><p>Human fires are frequent, spring-time and close to people. Lightning fires are fewer, midsummer and remote, and cause 84% of the area burned. Evidence: Figures 4–7.</p></article>
+      <article><span class="qn">Q3</span><h3>The tail is the story</h3><p>Fires of 200 ha or more are 5.3% of fires but 98.9% of the area. Since 1980 the yearly median escaped lightning fire has risen (Spearman ρ = 0.68, p &lt; 0.001); human fires show no significant change. Evidence: Figures 8–9.</p></article>
+      <article><span class="qn">Q4</span><h3>A stable belt, burning harder and further west</h3><p>The belt has not moved north, but mapped burning per year doubled in the 2020s and its centre moved about 370 km west. Per unit of land, the Prairie provinces burn hardest. Evidence: Figures 10–11.</p></article>
+    </div>
+  </section>
+
+  <section class="gutter" id="method">
+    <div class="col"><div class="qhead"><span class="qn">∴</span><p class="eyebrow">Method and limits</p><h2>How we built it</h2></div></div>
+    <div class="wide notes">
+      <div><h4>Data</h4><ul>
+        <li>CNFDB point data (448,447 fires, 1950–2025) and burned-area polygons (1972–2024), Natural Resources Canada, Open Government Licence – Canada.</li>
+        <li>Province boundaries: Natural Earth (public domain).</li>
+      </ul></div>
+      <div><h4>Cleaning decisions</h4><ul>
+        <li>Dropped year codes of −999 and 171 sparse pre-1950 records.</li>
+        <li>Each fire is placed in the province or territory where it burned (a spatial join), not by the agency that reported it.</li>
+        <li>Yearly totals match NRCan's published NFDB summary within 0.6% in every year except 1979.</li>
+        <li>Unknown causes are kept and shown in grey.</li>
+        <li>Fire sizes are often recorded at 0.1 ha, so size trends use fires of 1 ha or more.</li>
+      </ul></div>
+      <div><h4>Statistics and limits</h4><ul>
+        <li>Trends are tested over 1980–2025, when reporting is complete: Kendall's τ with a Theil–Sen slope, and Spearman's ρ for yearly medians.</li>
+        <li>New Brunswick reports from 1980 and PEI from 2018; the 2020s are a partial decade.</li>
+        <li>Trends are associations, not causes: suppression policy and satellite mapping changed over the period.</li>
+        <li>Cause is Unknown for 4% of the area burned.</li>
+      </ul></div>
+      <div><h4>Tools</h4><ul>
+        <li>Python: pandas, Matplotlib and Seaborn for the printed figures; Plotly Express for this site; GeoPandas for the maps.</li>
+        <li>Every figure is reproducible from one notebook (<code>canada_on_fire.ipynb</code>), which holds each figure's full code.</li>
+        <li>Code: <a href="https://github.com/rafidreaz/canada-on-fire/tree/moskhan" rel="noopener">github.com/rafidreaz/canada-on-fire</a> (branch <code>moskhan</code>).</li>
+      </ul></div>
+    </div>
+  </section>
+</main>
+
+<footer class="site gutter">
+  <div class="in wide">
+    <span>Group 15: Md. Omar Shohid Khan, Md Rafid Reaz, Sumaiya Islam Shondhy · COMP 6934, Memorial University · Instructor: Dr. Karteek Popuri</span>
+    <span>Data: <a href="https://cwfis.cfs.nrcan.gc.ca/en/fire-history" rel="noopener">CNFDB, Natural Resources Canada</a> · <a href="https://github.com/rafidreaz/canada-on-fire/tree/moskhan" rel="noopener">Code and notebook</a></span>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.34.0/plotly.min.js"></script>
+<script>
+(() => {
+  const DECADES = [1970, 1980, 1990, 2000, 2010, 2020];
+  const DLABEL = ["1970s", "1980s", "1990s", "2000s", "2010s", "2020–24"];
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const isDark = () => {
+    const t = document.documentElement.getAttribute("data-theme");
+    return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  };
+
+  /* ---------- image stacks (theme pairs) ---------- */
+  const pair = (base, extra = "") =>
+    `<img class="t-light" src="img/${base}_light.png" alt="" loading="lazy" ${extra}><img class="t-dark" src="img/${base}_dark.png" alt="" loading="lazy" ${extra}>`;
+  const scarLayers = DECADES.map(d => pair(`scars_${d}`, `data-dec="${d}"`)).join("");
+  document.getElementById("heroStack").innerHTML = pair("land") + scarLayers;
+  document.getElementById("scarStack").innerHTML = pair("land") + scarLayers;
+  document.getElementById("dotStack").innerHTML = pair("land") +
+    pair("dots_lightning", 'data-cause="lightning"') + pair("dots_human", 'data-cause="human" style="opacity:0"');
+  document.getElementById("rateStack").innerHTML = pair("rate");
+
+  /* ---------- theme toggle (nav) ---------- */
+  const themeBtn = document.getElementById("themeBtn");
+  const syncThemeLabel = () => themeBtn.setAttribute("aria-label", isDark() ? "Switch to light theme" : "Switch to dark theme");
+  themeBtn.addEventListener("click", () => {
+    const next = isDark() ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem("cof-theme", next); } catch (e) {}
+    syncThemeLabel();
+  });
+  syncThemeLabel();
+
+  /* ---------- decade scrubber ---------- */
+  const slider = document.getElementById("decade");
+  const readout = document.getElementById("readout");
+  let meta = null;
+  let curK = 5;
+  function drawCentres(k) {
+    if (!meta) return;
+    const H = 100 * meta.aspect, cols = meta.decade_colors[isDark() ? "dark" : "light"];
+    const pts = meta.centres.slice(0, k + 1).map(c => [c.x * 100, c.y * H, c]);
+    const path = pts.map(p => p[0].toFixed(2) + "," + p[1].toFixed(2)).join(" ");
+    const last = pts[pts.length - 1];
+    document.getElementById("centreSvg").innerHTML =
+      `<polyline points="${path}" fill="none" stroke="${css("--ink")}" stroke-width="0.25"/>` +
+      pts.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="0.9" fill="${cols[i]}" stroke="${css("--ink")}" stroke-width="0.25"/>`).join("") +
+      `<text x="${last[0] - 1.6}" y="${last[1] + 3.6}" text-anchor="end">${DLABEL[k]} centre</text>`;
+  }
+  function showDecade(k) {
+    curK = k;
+    document.querySelectorAll("#scarStack img[data-dec]").forEach(img => {
+      img.style.opacity = DECADES.indexOf(+img.dataset.dec) <= k ? 1 : 0;
+    });
+    if (meta) {
+      const total = DECADES.slice(0, k + 1).reduce((s, d) => s + (meta.decade_mha[d] || 0), 0);
+      readout.textContent = `1972–${k === 5 ? "2024" : DECADES[k] + 9}: ${total.toFixed(1)} Mha mapped · ${DLABEL[k]}: ${meta.centres[k].mha_yr.toFixed(1)} Mha a year`;
+      drawCentres(k);
+    }
+  }
+  slider.addEventListener("input", () => showDecade(+slider.value));
+  const play = document.getElementById("play");
+  let timer = null;
+  play.addEventListener("click", () => {
+    if (timer) { clearInterval(timer); timer = null; play.setAttribute("aria-pressed", "false"); play.textContent = "Play"; return; }
+    let k = 0; slider.value = 0; showDecade(0);
+    play.setAttribute("aria-pressed", "true"); play.textContent = "Pause";
+    timer = setInterval(() => {
+      k += 1; slider.value = k; showDecade(k);
+      if (k >= 5) { clearInterval(timer); timer = null; play.setAttribute("aria-pressed", "false"); play.textContent = "Play"; }
+    }, 900);
+  });
+  function drawRamp() {
+    if (!meta) return;
+    const th = isDark() ? "dark" : "light";
+    const cols = meta.decade_colors[th];
+    document.getElementById("ramp").innerHTML =
+      cols.map((c, i) => `<span><i style="background:${c}"></i>${DLABEL[i]}</span>`).join("");
+    const b = meta.rate_bins;
+    document.getElementById("rateRamp").innerHTML = meta.rate_colors[th]
+      .map((c, i) => `<span><i style="background:${c}"></i>${b[i]}–${b[i + 1].toLocaleString()}</span>`).join("");
+    drawCentres(curK);
+  }
+  function setupMaps(m) {
+    meta = m;
+    ["heroStack", "scarStack", "dotStack", "rateStack"].forEach(id =>
+      document.getElementById(id).style.aspectRatio = `1 / ${m.aspect}`);
+    document.getElementById("scarStack").insertAdjacentHTML("beforeend",
+      `<svg class="overlay" id="centreSvg" viewBox="0 0 100 ${(100 * m.aspect).toFixed(2)}" preserveAspectRatio="none" aria-hidden="true"></svg>`);
+    showDecade(5); drawRamp();
+  }
+  function drawTopYears(s) {
+    document.getElementById("topYears").innerHTML = `<table class="data"><thead><tr><th>Rank</th><th>Year</th><th>Area burned (Mha)</th><th>Fires</th></tr></thead><tbody>` +
+      s.top_years.map((r, i) => `<tr><td>${i + 1}</td><td class="num">${r.year}</td><td class="num">${r.mha.toFixed(2)}</td><td class="num">${r.fires.toLocaleString()}</td></tr>`).join("") +
+      `</tbody></table>`;
+  }
+
+  /* ---------- cause toggle ---------- */
+  document.querySelectorAll("button[data-cause]").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll("button[data-cause]").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+    document.querySelectorAll("#dotStack img[data-cause]").forEach(img => {
+      img.style.opacity = img.dataset.cause === b.dataset.cause ? 1 : 0;
+    });
+  }));
+
+  /* ---------- waffles ---------- */
+  function drawWaffles(s) {
+    const order = ["Lightning", "Human", "Unknown"];
+    const col = { Lightning: "var(--lightning)", Human: "var(--human)", Unknown: "var(--unknown)" };
+    const block = (title, sq, raw, unit) => {
+      let cells = "";
+      order.forEach(c => { for (let i = 0; i < sq[c]; i++) cells += `<i style="background:${col[c]}" title="${c}: ${sq[c]}% (${raw[c].toLocaleString()} ${unit})"></i>`; });
+      const labs = order.map(c => `<div><b>${sq[c]}%</b><span><i style="background:${col[c]}"></i>${c}</span></div>`).join("");
+      return `<div class="waffle"><h4>${title}</h4><div class="cells" role="img" aria-label="${title}: ${order.map(c => c + " " + sq[c] + "%").join(", ")}">${cells}</div><div class="wlab">${labs}</div></div>`;
+    };
+    document.getElementById("waffles").innerHTML =
+      block("Share of fires started", s.waffle_fires, s.fires_raw, "fires") +
+      block("Share of area burned", s.waffle_area, s.area_mha_raw, "Mha");
+  }
+
+  /* ---------- Plotly charts themed from tokens ---------- */
+  const specs = {};
+  const roleColor = role => ({
+    context: css("--context"), Lightning: css("--lightning"), Human: css("--human"),
+    Unknown: css("--unknown"), ember: css("--ember"), neutral: css("--neutral"), muted: css("--muted-fill"), ink: css("--ink")
+  })[role] || css("--neutral");
+
+  function themed(id) {
+    const spec = JSON.parse(JSON.stringify(specs[id]));
+    const ink = css("--ink"), muted = css("--muted"), line = css("--line"), surface = css("--surface");
+    spec.data.forEach(t => {
+      const m = t.meta;
+      if (t.type === "heatmap") {
+        t.colorscale = [0, .25, .5, .75, 1].map((v, i) => [v, css(`--heat-${i}`)]);
+        t.colorbar = Object.assign(t.colorbar || {}, { tickfont: { color: muted }, outlinewidth: 0 });
+      } else if (t.type === "treemap") {
+        t.marker = { colors: m.map(r => r === "ember" ? css("--ember-fill") : roleColor(r)), line: { color: surface, width: 2 } };
+        t.textfont = { color: m.map(r => r === "ember" ? "#FFFFFF" : ink), family: "Inter" };
+      } else if (Array.isArray(m)) {
+        t.marker = Object.assign(t.marker || {}, { color: m.map(roleColor) });
+      } else if (t.type === "scatter" || t.type === "scatterpolar") {
+        const c = roleColor(m);
+        t.line = Object.assign(t.line || {}, { color: c, width: m === "context" ? 1.2 : 3 });
+        if (t.mode && t.mode.includes("markers")) { t.marker = { color: c, size: 10, line: { color: surface, width: 2 } }; t.textfont = { color: ink, family: "Inter", size: 13 }; }
+        if (t.fill) t.fillcolor = c + "22";
+      } else if (t.type === "bar") {
+        t.marker = { color: roleColor(m), line: { color: surface, width: 1 } };
+      } else if (t.type === "box") {
+        t.fillcolor = roleColor(m); t.line = { color: ink, width: 1 }; t.marker = { color: roleColor(m) };
+      }
+    });
+    const ax = { gridcolor: line, linecolor: line, zerolinecolor: line, tickfont: { color: muted }, title: { font: { color: muted } } };
+    const L = spec.layout;
+    Object.keys(L).filter(k => /^[xy]axis\d*$/.test(k)).forEach(k => { L[k] = Object.assign({}, ax, L[k], { gridcolor: line, linecolor: line, zerolinecolor: line, tickfont: { color: muted } }); if (L[k].title) L[k].title = Object.assign({ font: { color: muted } }, typeof L[k].title === "string" ? { text: L[k].title } : L[k].title); });
+    if (!L.xaxis) L.xaxis = ax; if (!L.yaxis) L.yaxis = ax;
+    if (L.polar) { L.polar.bgcolor = "rgba(0,0,0,0)"; L.polar.angularaxis = Object.assign(L.polar.angularaxis || {}, { color: muted, gridcolor: line, linecolor: line }); L.polar.radialaxis = Object.assign(L.polar.radialaxis || {}, { color: muted, gridcolor: line, linecolor: line }); }
+    if (L.shapes) L.shapes.forEach(s => s.fillcolor = css("--shade"));
+    if (L.coloraxis) {
+      L.coloraxis.colorscale = [0, .25, .5, .75, 1].map((v, i) => [v, css(`--heat-${i}`)]);
+      L.coloraxis.colorbar = Object.assign(L.coloraxis.colorbar || {}, { tickfont: { color: muted }, outlinewidth: 0, title: { text: "Mha", font: { color: muted } } });
+    }
+    Object.assign(L, {
+      paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+      font: { family: "Inter, Helvetica Neue, Arial, sans-serif", color: ink, size: 13 },
+      hoverlabel: { bgcolor: surface, bordercolor: line, font: { color: ink, family: "Inter" } },
+      legend: Object.assign(L.legend || {}, { orientation: "h", y: 1.08, x: 0, font: { color: ink } }),
+      margin: L.margin || { l: 64, r: 16, t: 24, b: 48 }
+    });
+    if (id === "c3_treemap" || id === "c2_heatmap") L.margin = { l: id === "c2_heatmap" ? 44 : 4, r: 4, t: 8, b: 32 };
+    if (id === "c5_radar") L.margin = { l: 40, r: 40, t: 48, b: 32 };
+    return spec;
+  }
+  /* ---------- table view for every chart (dataviz: tooltips never gate a value) ---------- */
+  const fmt = v => v === null || v === undefined ? "" : typeof v === "number" ? (Math.abs(v) >= 100 ? Math.round(v).toLocaleString() : (+v.toFixed(2)).toLocaleString()) : v;
+  function tableFor(spec) {
+    const d = spec.data;
+    if (d[0].type === "treemap") {
+      return { head: ["Province / territory", "Area burned 2023 (Mha)"], rows: d[0].labels.map((l, i) => [l, d[0].values[i]]).sort((a, b) => b[1] - a[1]) };
+    }
+    if (d[0].z) {
+      const t = d[0];
+      return { head: ["Year (Mha)"].concat(t.y), rows: t.x.map((yr, j) => [yr].concat(t.y.map((_, i) => t.customdata[i][j]))) };
+    }
+    const keyOf = (t, i) => {
+      if (t.customdata) { const c = t.customdata[i]; return Array.isArray(c) ? c[0] : c; }
+      if (t.theta) return t.theta[i];
+      return t.orientation === "h" ? t.y[i] : t.x[i];
+    };
+    const valOf = (t, i) => { const v = t.r ? t.r[i] : (t.orientation === "h" ? t.x[i] : t.y[i]); return v === null ? null : Math.abs(v); };
+    const keys = [], rows = {};
+    d.forEach((t, ti) => {
+      const n = (t.r || t.y || []).length;
+      for (let i = 0; i < n; i++) {
+        const k = keyOf(t, i); if (!(k in rows)) { rows[k] = []; keys.push(k); }
+        rows[k][ti] = valOf(t, i);
+      }
+    });
+    const names = d.map((t, i) => t.name || (spec.layout.yaxis2 && i ? "Share of area (%)" : "Share of fires (%)"));
+    let out = keys.map(k => [k, ...d.map((_, ti) => rows[k][ti] ?? null)]);
+    if (d[0].orientation === "h") out = out.reverse();                 // largest first, as drawn
+    return { head: ["", ...names], rows: out };
+  }
+  function addTable(id) {
+    const host = document.getElementById(id).closest(".plate").querySelector("footer");
+    if (!host || host.querySelector(".dt")) return;
+    const { head, rows } = tableFor(specs[id]);
+    host.insertAdjacentHTML("afterbegin", `<details class="why dt"><summary>Data table</summary><div class="tablewrap"><table class="data"><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `<tr>${r.map((v, j) => `<td>${j ? fmt(v) : v}</td>`).join("")}</tr>`).join("")}</tbody></table></div></details>`);
+  }
+
+  function render(id) {
+    if (!specs[id]) return;
+    const s = themed(id);
+    Plotly.react(id, s.data, s.layout, { responsive: true, displaylogo: false, modeBarButtonsToRemove: ["select2d", "lasso2d", "autoScale2d"] });
+  }
+  const ids = ["c1_trend", "c2_heatmap", "c3_treemap", "c5_radar", "c6_bars", "c7_hist", "c8_medians"];
+  function renderAll() { ids.forEach(render); drawRamp(); }
+
+  // one retry per file, so a dropped connection does not leave an empty chart
+  const getJSON = url => fetch(url).catch(() => fetch(url)).then(r => r.json());
+  Promise.all([
+    getJSON("data/summary.json").then(s => { drawWaffles(s); drawTopYears(s); }),
+    getJSON("data/map_meta.json").then(setupMaps),
+    ...ids.map(id => getJSON(`charts/${id}.json`).then(s => { specs[id] = s; render(id); try { addTable(id); } catch (e) { console.warn("table", id, e); } }))
+  ]).catch(err => console.error("Chart data failed to load:", err));
+
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderAll);
+  new MutationObserver(renderAll).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+})();
+</script>
